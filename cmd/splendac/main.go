@@ -227,6 +227,32 @@ var cmds = map[string]func(*args){
 
 		fmt.Println(ts.TS)
 	},
+
+	"buy": func(a *args) {
+		if len(a.args) < 3 {
+			fmt.Println("usage: splendac buy <id> <tier> <index>")
+		}
+
+		tier, err := strconv.Atoi(a.args[1])
+		if err != nil {
+			panic(err)
+		}
+		index, err := strconv.Atoi(a.args[2])
+		if err != nil {
+			panic(err)
+		}
+
+		ts := splenda.TS{}
+		_, err = post(a.url+"/api/games/"+a.args[0]+"/buy", a.sid, splenda.Buy{
+			Tier:  tier,
+			Index: index,
+		}, &ts)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println(ts.TS)
+	},
 }
 
 func (a *args) call(cmd string) {

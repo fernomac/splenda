@@ -1,0 +1,56 @@
+<html>
+  <head>
+    <title>Splenda</title>
+    <link href="assets/main.css" rel="stylesheet" type="text/css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      function signup() {
+        const id = document.getElementById('id').value
+        const pw = document.getElementById('pw').value
+
+        fetch('api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          referrerPolicy: 'no-referrer',
+          body: JSON.stringify({'id': id, 'pw': pw}),
+        }).then(function(res) {
+          if (res.ok) {
+            window.location = '/'
+          } else {
+            res.text().then((text) => {
+              alert(text)
+            })
+          }
+        }).catch(function(error) {
+          alert(error)
+        })
+      }
+    </script>
+  </head>
+  <body>
+    <div class="root">
+      <div class="top-bar">
+        <span class="logo">Splenda</span>
+        <span class="links"><a href="/">home</a></span>
+      </div>
+      <div class="main">
+        <div class="center">
+
+<div style="margin-bottom: 20px;">Create a new User</div>
+<div>
+  <table>
+    <tr><td>username:</td><td>&nbsp;</td><td><input id="id" type="text"></td></tr>
+    <tr><td>password:</td><td>&nbsp;</td><td><input id="pw" type="password"></td></tr>
+  </table>
+  <br/>
+  <input type="submit" value="sign up" class="button" onclick="signup()">
+</div>
+
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

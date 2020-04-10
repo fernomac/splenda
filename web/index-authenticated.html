@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <title>Splenda</title>
+    <link href="/assets/main.css" rel="stylesheet" type="text/css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      window.onload = function() {
+        fetch('/api/games').then(function(res) {
+          return res.json()
+        }).then(function(body) {
+          var html = '<table>'
+          html += '<tr><th>Link</th><th>Players</th></tr>'
+          for (game of body.games) {
+            html += '<tr><td><a href="/games/' + game.id + '">go</a></td>'  
+            html += '<td>'
+            var first = true
+            for (player of game.players) {
+              if (first) {
+                first = false
+              } else {
+                html += ', '
+              }
+              html += player
+            }
+            html +='</td></tr>'
+          }
+          html += '</table>'
+          document.getElementById('table').innerHTML = html
+        })
+      }
+    </script>
+  </head>
+  <body>
+    <div class="root">
+      <div class="top-bar">
+        <span class="logo">Splenda</span>
+        <span class="links"><a href="logout">logout</a></span>
+      </div>
+      <div class="main">
+        <div class="center">
+          <div>Welcome to <b>Splenda</b>. Choose a game:</div>
+          <div id="table" class="gamelist center">
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -24,6 +24,12 @@ func TestTwoPlayers(t *testing.T) {
 	}
 	assertGameState(t, game, id, play, "user1")
 	assertCoins(t, game, map[string]int{red: 4, green: 4, blue: 4, black: 4, white: 4, wild: 5})
+	assertNobles(t, game, []string{"catherine_of_medici", "macchiavelli", "suleiman_i"})
+	assertCards(t, game.Table.Cards[2], []string{"3_7_3_4", "3_5_33_2", "3_5_33_0", "3_6_23_0"})
+	assertCards(t, game.Table.Cards[1], []string{"2_23_2_3", "2_5_0", "2_5_2", "2_5_3_0"})
+	assertCards(t, game.Table.Cards[0], []string{"1_2_31_4", "1_3_21_3", "1_22_3", "1_22_1_0"})
+
+	// TODO: Make some moves.
 }
 
 func assertGameState(t *testing.T, game *Game, id string, state string, current string) {
@@ -52,6 +58,40 @@ func assertCoins(t *testing.T, game *Game, coins map[string]int) {
 	}
 }
 
+func assertNobles(t *testing.T, game *Game, nobles []string) {
+	actual := []string{}
+	for _, n := range game.Table.Nobles {
+		actual = append(actual, n.ID)
+	}
+	if len(nobles) != len(actual) {
+		t.Errorf("bad table nobles: expected %v, got %v", nobles, actual)
+		return
+	}
+	for i, n := range actual {
+		if n != nobles[i] {
+			t.Errorf("bad table nobles: expected %v, got %v", nobles, actual)
+			return
+		}
+	}
+}
+
+func assertCards(t *testing.T, cards []*Card, expected []string) {
+	actual := []string{}
+	for _, c := range cards {
+		actual = append(actual, c.ID)
+	}
+	if len(expected) != len(actual) {
+		t.Errorf("bad cards: expected %v, got %v", expected, actual)
+		return
+	}
+	for i, a := range actual {
+		if a != expected[i] {
+			t.Errorf("bad cards: expected %v, got %v", expected, actual)
+			return
+		}
+	}
+}
+
 func setup() (*Impl, error) {
 	cleanup()
 
@@ -75,7 +115,8 @@ func setup() (*Impl, error) {
 		return nil, err
 	}
 
-	return NewImpl(db), nil
+	impl := NewImplSeed(db, 1)
+	return impl, nil
 }
 
 func cleanup() {

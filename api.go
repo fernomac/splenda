@@ -1,12 +1,14 @@
 package splenda
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 )
@@ -25,11 +27,16 @@ func NewAPI(auth *Auth, impl *Impl) *API {
 // Serve serves the API on the given endpoint.
 func (a *API) Serve(port string) error {
 	http.HandleFunc("/", a.GetRoot)
-	http.HandleFunc("/api/users", a.Users)
-	http.HandleFunc("/api/login", a.Login)
+	http.HandleFunc("/assets/", a.GetAsset)
+	http.HandleFunc("/signup", a.Signup)
+	http.HandleFunc("/login", a.Login)
+	http.HandleFunc("/logout", a.Logout)
+	http.HandleFunc("/games/", a.Game)
 
-	http.HandleFunc("/api/games", a.Games)
-	http.HandleFunc("/api/games/", a.Game)
+	http.HandleFunc("/api/users", a.UsersAPI)
+	http.HandleFunc("/api/login", a.LoginAPI)
+	http.HandleFunc("/api/games", a.GamesAPI)
+	http.HandleFunc("/api/games/", a.GameAPI)
 
 	return http.ListenAndServe(port, nil)
 }
@@ -44,30 +51,122 @@ func (a *API) authorize(req *http.Request) (string, error) {
 
 // GetRoot handles GET / -- load the html, javascript, etc.
 func (a *API) GetRoot(res http.ResponseWriter, req *http.Request) {
-	if req.Method != "GET" {
+	if req.Method != http.MethodGet {
 		res.WriteHeader(405)
 		return
 	}
 
-	id, err := a.authorize(req)
+	_, err := a.authorize(req)
 	if err != nil {
-		a.getAnonymousRoot(res, req)
+		a.render("web/index.html", res)
 		return
 	}
 
-	a.getAuthorizedRoot(id, res, req)
+	a.render("web/index-authenticated.html", res)
 }
 
-func (a *API) getAnonymousRoot(res http.ResponseWriter, req *http.Request) {
-	res.Write([]byte("Hello, anonymous\n"))
+// GetAsset gets an arbitrary public asset from the web folder.
+func (a *API) GetAsset(res http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodGet {
+		res.WriteHeader(405)
+		return
+	}
+	file := path.Join("web", strings.TrimPrefix(req.URL.Path, "/assets/"))
+	a.render(file, res)
 }
 
-func (a *API) getAuthorizedRoot(id string, res http.ResponseWriter, req *http.Request) {
-	res.Write([]byte(fmt.Sprintf("Hello, %v\n", id)))
+// Signup handles GET /signup -- the UI for signing up a new user.
+func (a *API) Signup(res http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodGet {
+		res.WriteHeader(405)
+		return
+	}
+	a.render("web/signup.html", res)
 }
 
-// Users dispatches GET|POST /api/users.
-func (a *API) Users(res http.ResponseWriter, req *http.Request) {
+// Login handles POST /login -- browser-based log in to the service.
+func (a *API) Login(res http.ResponseWriter, req *http.Request) {
+	if req.Method != "POST" {
+		res.WriteHeader(405)
+		return
+	}
+
+	if err := req.ParseForm(); err != nil {
+		res.WriteHeader(400)
+		return
+	}
+
+	id := req.Form.Get("id")
+	pw := req.Form.Get("pw")
+
+	sid, err := a.auth.Login(id, pw)
+	if err != nil {
+		a.render("web/login-failed.html", res)
+		return
+	}
+
+	// Redirect back to the homepage with a session cookie.
+	http.SetCookie(res, &http.Cookie{
+		Name:    "sid",
+		Value:   sid,
+		Path:    "/",
+		Expires: time.Now().Add(13 * 24 * time.Hour),
+	})
+	res.Header().Set("Location", "/")
+	res.WriteHeader(303)
+}
+
+// Logout logs out of the web interface.
+func (a *API) Logout(res http.ResponseWriter, req *http.Request) {
+	// Redirect back to the homepage with NO session cookie.
+	http.SetCookie(res, &http.Cookie{
+		Name:    "sid",
+		Value:   "",
+		Path:    "/",
+		Expires: time.Now().Add(-1 * time.Hour),
+	})
+	res.Header().Set("Location", "/")
+	res.WriteHeader(303)
+}
+
+// Game renders the game's HTML
+func (a *API) Game(res http.ResponseWriter, req *http.Request) {
+	userID, err := a.authorize(req)
+	if err != nil {
+		res.WriteHeader(401)
+		return
+	}
+
+	gameID := strings.TrimPrefix(req.URL.Path, "/games/")
+
+	bs, err := ioutil.ReadFile("web/game.html")
+	if err != nil {
+		res.WriteHeader(500)
+		res.Write([]byte(err.Error() + "\n"))
+		return
+	}
+
+	bs = bytes.ReplaceAll(bs, []byte("{{USERID}}"), []byte(userID))
+	bs = bytes.ReplaceAll(bs, []byte("{{GAMEID}}"), []byte(gameID))
+
+	res.WriteHeader(200)
+	res.Write(bs)
+}
+
+func (a *API) render(file string, res http.ResponseWriter) {
+	bs, err := ioutil.ReadFile(file)
+	if err != nil {
+		res.WriteHeader(500)
+		res.Write([]byte(err.Error() + "\n"))
+		return
+	}
+
+	res.WriteHeader(200)
+	res.Write(bs)
+}
+
+// UsersAPI dispatches GET|POST /api/users.
+func (a *API) UsersAPI(res http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET":
 		a.listUsers(res, req)
@@ -125,8 +224,8 @@ func (a *API) newUser(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(201)
 }
 
-// Login handles POST /api/login -- log in to the service.
-func (a *API) Login(res http.ResponseWriter, req *http.Request) {
+// LoginAPI handles POST /api/login -- programmatically log in to the service.
+func (a *API) LoginAPI(res http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
 		res.WriteHeader(405)
 		return
@@ -157,8 +256,8 @@ func (a *API) Login(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(200)
 }
 
-// Games handles GET|POST /api/games
-func (a *API) Games(res http.ResponseWriter, req *http.Request) {
+// GamesAPI handles GET|POST /api/games
+func (a *API) GamesAPI(res http.ResponseWriter, req *http.Request) {
 	id, err := a.authorize(req)
 	if err != nil {
 		res.WriteHeader(401)
@@ -228,8 +327,8 @@ func (a *API) newGame(id string, res http.ResponseWriter, req *http.Request) {
 	marshal(game, res)
 }
 
-// Game handles GET|POST|DELETE /api/games/...
-func (a *API) Game(res http.ResponseWriter, req *http.Request) {
+// GameAPI handles GET|POST|DELETE /api/games/...
+func (a *API) GameAPI(res http.ResponseWriter, req *http.Request) {
 	path := strings.TrimPrefix(req.URL.Path, "/api/games/")
 
 	if req.Method == http.MethodGet {
@@ -263,6 +362,9 @@ func (a *API) Game(res http.ResponseWriter, req *http.Request) {
 
 	case "reserve":
 		a.reserve(gameID, res, req)
+
+	case "buy":
+		a.buy(gameID, res, req)
 
 	default:
 		res.WriteHeader(404)
@@ -389,8 +491,12 @@ func (a *API) reserve(gameID string, res http.ResponseWriter, req *http.Request)
 }
 
 // Buy handles POST /games/<id>/buy -- buy a card.
-func (a *API) Buy(res http.ResponseWriter, req *http.Request) {
-	// TODO: verify login cookie.
+func (a *API) buy(gameID string, res http.ResponseWriter, req *http.Request) {
+	userID, err := a.authorize(req)
+	if err != nil {
+		res.WriteHeader(401)
+		return
+	}
 
 	move := Buy{}
 	if err := unmarshal(req.Body, &move); err != nil {
@@ -398,12 +504,16 @@ func (a *API) Buy(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ts := TS{}
-	// TODO: Query and update DB.
+	ts, err := a.impl.Buy(gameID, userID, move.Tier, move.Index)
+	if err != nil {
+		res.WriteHeader(500)
+		res.Write([]byte(err.Error() + "\n"))
+		return
+	}
 
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(200)
-	marshal(ts, res)
+	marshal(TS{ts}, res)
 }
 
 func marshal(src interface{}, dst io.Writer) {

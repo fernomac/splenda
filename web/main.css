@@ -1,0 +1,226 @@
+body {
+  background-color: #FAFAFA;
+  font-family: sans-serif;
+  margin: 0;
+}
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.top-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.5em;
+  background-color: #89d6c9;
+  border-bottom: 1px solid #AAA;
+}
+.top-bar .logo {
+  justify-self: flex-start;
+  flex-grow: 1;
+}
+.top-bar .links {
+  justify-self: flex-end;
+}
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.center {
+  text-align: center;
+  padding: 1em;
+}
+.button {
+  font-size: 0.9em;
+  padding: 0.4em 0.6em;
+  border: 2px solid #89d6c9;
+  border-radius: 3px;
+  transition-duration: 0.2s;
+}
+.button:hover {
+  background-color: #89d6c9;
+}
+.gamelist table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.gamelist tr:nth-child(even) {
+  background-color: #F0F0F0;
+}
+.gamelist th {
+  background-color: #89d6c9;
+  padding: 1em;
+}
+.gamelist td {
+  text-align: center;
+  padding: 1em;
+}
+.table {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+}
+.nobles {
+  display: flex;
+  flex-direction: row;
+}
+.noble {
+  width: 4.2em;
+  height: 4.2em;
+  margin: 0.7em;
+  border-radius: 0.25em;
+  background-color: #DDD;
+  display: flex;
+  flex-direction: row;
+}
+.noble:hover {
+  box-shadow: 2px 2px gold, 2px -2px gold, -2px 2px gold, -2px -2px gold;
+}
+.noble .info {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  padding: 0.2em;
+  border-radius: 0.25em 0 0 0.25em;
+  background-color: #EEE;
+}
+.noble .points {
+  text-align: center;
+  font-weight: bold;
+}
+.noble .cost {
+  width: 1em;
+  font-size: 0.6em;
+  text-align: center;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 0.25em;
+  padding-top: 0.1em;
+  margin-top: 0.1em;
+}
+.cards {
+  display: flex;
+  flex-direction: row;
+}
+.card {
+  width: 3.8em;
+  height: 5.2em;
+  margin: 0.7em;
+  border-radius: 0.25em;
+  display: flex;
+  flex-direction: column;
+}
+.card:hover {
+  box-shadow: 2px 2px gold, 2px -2px gold, -2px 2px gold, -2px -2px gold;
+}
+.card .top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.2em;
+  border-radius: 0.25em 0.25em 0 0;
+  background-color: rgba(255,255,255,0.4);
+}
+.card .points {
+  text-align: center;
+  font-weight: bold;
+}
+.card .gem {
+  width: 0.6em;
+  height: 0.6em;
+  border-width: 1px;
+  border-style: solid;
+  transform:rotate(45deg);
+}
+.card .info {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  justify-content: flex-end;
+  padding: 0.2em;
+}
+.card .cost {
+  width: 1em;
+  font-size: 0.6em;
+  text-align: center;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 0.25em;
+  padding-top: 0.1em;
+  margin-top: 0.1em;
+}
+.coins {
+  display: flex;
+  flex-direction: row;
+}
+.coin {
+  width: 2em;
+  height: 2em;
+  margin: 0.5em;
+  text-align: center;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 50%;
+}
+.coin:hover {
+  box-shadow: 2px 2px gold, 2px -2px gold, -2px 2px gold, -2px -2px gold;
+}
+.coin .num {
+  width: 2em;
+  height: 2em;
+  display: table-cell;
+  vertical-align: middle;
+}
+.red {
+  color: white;
+  border-color: #EEE;
+  background-color: red;
+}
+.blue {
+  color: white;
+  border-color: #EEE;
+  background-color: blue;
+}
+.green {
+  color: white;
+  border-color: #EEE;
+  background-color: green;
+}
+.black {
+  color: white;
+  border-color: #EEE;
+  background-color: black;
+}
+.white {
+  color: black;
+  border-color: black;
+  background-color: white;
+}
+.redcard {
+  background-color: #F0C0C0;
+  border: 1px solid #FAFAFA;
+}
+.bluecard {
+  background-color: #C0E0F0;
+  border: 1px solid #FAFAFA;
+}
+.greencard {
+  background-color: #B0F0B0;
+  border: 1px solid #FAFAFA;
+}
+.blackcard {
+  background-color: #DDD;
+  border: 1px solid #FAFAFA;
+}
+.whitecard {
+  background-color: #F8F8F8;
+  border: 1px solid #DDD;
+}

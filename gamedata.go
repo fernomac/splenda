@@ -1,7 +1,7 @@
 package splenda
 
 import (
-	"math/rand"
+	"sort"
 	"strings"
 )
 
@@ -41,16 +41,21 @@ func nobleFromID(id string) (noble, bool) {
 	return n, ok
 }
 
-func pick(n int) []string {
+type rng interface {
+	Intn(n int) int
+}
+
+func pick(n int, rng rng) []string {
 	deck := []string{}
 	ret := []string{}
 
 	for id := range nobles {
 		deck = append(deck, id)
 	}
+	sort.Strings(deck)
 
 	for i := 0; i < n; i++ {
-		j := rand.Intn(len(deck))
+		j := rng.Intn(len(deck))
 		ret = append(ret, deck[j])
 		deck = append(deck[:j], deck[j+1:]...)
 	}
@@ -81,16 +86,17 @@ func cardFromID(id string) (card, bool) {
 	return card{}, false
 }
 
-func shuffle(cs map[string]card) []string {
+func shuffle(cs map[string]card, rng rng) []string {
 	deck := []string{}
 	ret := []string{}
 
 	for id := range cs {
 		deck = append(deck, id)
 	}
+	sort.Strings(deck)
 
 	for len(deck) > 0 {
-		j := rand.Intn(len(deck))
+		j := rng.Intn(len(deck))
 		ret = append(ret, deck[j])
 		deck = append(deck[:j], deck[j+1:]...)
 	}
@@ -107,46 +113,16 @@ func noblemap(ns []noble) map[string]noble {
 }
 
 var nobles = noblemap([]noble{
-	noble{
-		id:   "mary_stuart",
-		cost: cost{red: 4, green: 4},
-	},
-	noble{
-		id:   "charles_v",
-		cost: cost{black: 3, red: 3, white: 3},
-	},
-	noble{
-		id:   "macchiavelli",
-		cost: cost{blue: 4, white: 4},
-	},
-	noble{
-		id:   "isabelle_of_castille",
-		cost: cost{black: 4, white: 4},
-	},
-	noble{
-		id:   "suleiman_i",
-		cost: cost{blue: 4, green: 4},
-	},
-	noble{
-		id:   "catherine_of_medici",
-		cost: cost{green: 3, blue: 3, red: 3},
-	},
-	noble{
-		id:   "anne_of_brittany",
-		cost: cost{green: 3, blue: 3, white: 3},
-	},
-	noble{
-		id:   "henry_viii",
-		cost: cost{black: 4, red: 4},
-	},
-	noble{
-		id:   "elisabeth_of_austria",
-		cost: cost{black: 3, blue: 3, white: 3},
-	},
-	noble{
-		id:   "francis_i",
-		cost: cost{black: 3, red: 3, green: 3},
-	},
+	{id: "mary_stuart", cost: cost{red: 4, green: 4}},
+	{id: "charles_v", cost: cost{black: 3, red: 3, white: 3}},
+	{id: "macchiavelli", cost: cost{blue: 4, white: 4}},
+	{id: "isabelle_of_castille", cost: cost{black: 4, white: 4}},
+	{id: "suleiman_i", cost: cost{blue: 4, green: 4}},
+	{id: "catherine_of_medici", cost: cost{green: 3, blue: 3, red: 3}},
+	{id: "anne_of_brittany", cost: cost{green: 3, blue: 3, white: 3}},
+	{id: "henry_viii", cost: cost{black: 4, red: 4}},
+	{id: "elisabeth_of_austria", cost: cost{black: 3, blue: 3, white: 3}},
+	{id: "francis_i", cost: cost{black: 3, red: 3, green: 3}},
 })
 
 func cardmap(cs []card) map[string]card {

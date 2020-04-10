@@ -1,20 +1,36 @@
 package splenda
 
 import (
-	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"math/rand"
 )
 
 // Impl implements Splenda's game logic.
 type Impl struct {
-	db *DB
+	db  *DB
+	rng rng
+}
+
+type realrng struct{}
+
+func (realrng) Intn(n int) int {
+	return rand.Intn(n)
 }
 
 // NewImpl creates a new Impl.
 func NewImpl(db *DB) *Impl {
 	return &Impl{
-		db: db,
+		db:  db,
+		rng: realrng{},
+	}
+}
+
+// NewImplSeed creates a new impl with the given psuedorandom seed.
+func NewImplSeed(db *DB, seed int64) *Impl {
+	return &Impl{
+		db:  db,
+		rng: rand.New(rand.NewSource(seed)),
 	}
 }
 
@@ -79,14 +95,14 @@ func (i *Impl) NewGame(players []string) (string, error) {
 		return "", err
 	}
 
-	nobles := pick(len(players) + 1)
+	nobles := pick(len(players)+1, i.rng)
 	if err := tx.InsertNobles(nobles); err != nil {
 		return "", err
 	}
 
-	t1 := shuffle(tier1)
-	t2 := shuffle(tier2)
-	t3 := shuffle(tier3)
+	t1 := shuffle(tier1, i.rng)
+	t2 := shuffle(tier2, i.rng)
+	t3 := shuffle(tier3, i.rng)
 
 	if err := tx.InsertCards(t1[:4], t2[:4], t3[:4]); err != nil {
 		return "", err
@@ -133,13 +149,13 @@ func (i *Impl) GetGame(gameID string, userID string, ts string) (*Game, error) {
 
 	// TODO: Do something different if ts is current?
 
-	table, err := i.getTable(tx)
+	table, err := getTable(tx)
 	if err != nil {
 		return nil, err
 	}
 	game.Table = table
 
-	players, err := i.getPlayers(tx)
+	players, err := getPlayers(tx)
 	if err != nil {
 		return nil, err
 	}
@@ -150,137 +166,6 @@ func (i *Impl) GetGame(gameID string, userID string, ts string) (*Game, error) {
 	}
 
 	return game, nil
-}
-
-func (i *Impl) getTable(tx *TX) (*Table, error) {
-	coins, err := tx.GetCoins()
-	if err != nil {
-		return nil, err
-	}
-
-	nobleIDs, err := tx.GetNobles()
-	if err != nil {
-		return nil, err
-	}
-	nobles, err := ToNobles(nobleIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	cards, err := i.getCards(tx)
-	if err != nil {
-		return nil, err
-	}
-
-	decks, err := tx.GetDecks()
-	if err != nil {
-		return nil, err
-	}
-
-	return &Table{
-		Coins:  coins,
-		Nobles: nobles,
-		Cards:  cards,
-		Decks:  decks,
-	}, nil
-}
-
-func (i *Impl) getCards(tx *TX) ([][]*Card, error) {
-	cards := [][]*Card{}
-	for tier := 1; tier <= 3; tier++ {
-		ids, err := tx.GetCards(tier)
-		if err != nil {
-			return nil, err
-		}
-
-		row, err := ToCards(ids)
-		if err != nil {
-			return nil, err
-		}
-
-		cards = append(cards, row)
-	}
-	return cards, nil
-}
-
-func (i *Impl) getPlayers(tx *TX) ([]*Player, error) {
-	userIDs, err := tx.GetPlayers()
-	if err != nil {
-		return nil, err
-	}
-
-	players := []*Player{}
-
-	for _, userID := range userIDs {
-		coins, err := tx.GetPlayerCoins(userID)
-		if err != nil {
-			return nil, err
-		}
-
-		nobleIDs, err := tx.GetPlayerNobles(userID)
-		if err != nil {
-			return nil, err
-		}
-		nobles, err := ToNobles(nobleIDs)
-		if err != nil {
-			return nil, err
-		}
-
-		cardIDs, reservedIDs, err := tx.GetPlayerCards(userID)
-		if err != nil {
-			return nil, err
-		}
-		cards, err := partition(cardIDs)
-		if err != nil {
-			return nil, err
-		}
-		reserved, err := ToCards(reservedIDs)
-		if err != nil {
-			return nil, err
-		}
-
-		points := score(nobles, cards)
-
-		players = append(players, &Player{
-			ID:       userID,
-			Coins:    coins,
-			Nobles:   nobles,
-			Cards:    cards,
-			Reserved: reserved,
-			Points:   points,
-		})
-	}
-
-	return players, nil
-}
-
-func partition(ids []string) (map[string][]*Card, error) {
-	ret := map[string][]*Card{}
-	for _, id := range ids {
-		card, err := ToCard(id)
-		if err != nil {
-			return nil, err
-		}
-
-		ret[card.Color] = append(ret[card.Color], card)
-	}
-	return ret, nil
-}
-
-func score(nobles []*Noble, cards map[string][]*Card) int {
-	points := 0
-
-	for _, noble := range nobles {
-		points += noble.Points
-	}
-
-	for _, row := range cards {
-		for _, card := range row {
-			points += card.Points
-		}
-	}
-
-	return points
 }
 
 // DeleteGame deletes a game.
@@ -302,14 +187,6 @@ func (i *Impl) DeleteGame(gameID string, userID string) error {
 	return tx.Commit()
 }
 
-func unique(strs []string) bool {
-	set := map[string]struct{}{}
-	for _, str := range strs {
-		set[str] = struct{}{}
-	}
-	return len(set) == len(strs)
-}
-
 // Take3 takes three coins of different colors.
 func (i *Impl) Take3(gameID string, userID string, colors []string) (string, error) {
 	if len(colors) != 3 {
@@ -326,7 +203,7 @@ func (i *Impl) Take3(gameID string, userID string, colors []string) (string, err
 
 	m := mover{gameID: gameID, userID: userID, db: i.db}
 	return m.Move(func(tx *TX) (string, string, error) {
-		if m.game.State != "play" {
+		if m.State() != play {
 			return "", "", errors.New("can't do that right now")
 		}
 
@@ -335,12 +212,20 @@ func (i *Impl) Take3(gameID string, userID string, colors []string) (string, err
 			delta[c] = 1
 		}
 
-		if err := transferCoins(tx, userID, delta, delta); err != nil {
+		if err := m.EarnCoins(tx, delta, delta); err != nil {
 			return "", "", err
 		}
 
-		return nextPlayer(m.players, m.index)
+		return m.NextPlayer()
 	})
+}
+
+func unique(strs []string) bool {
+	set := map[string]struct{}{}
+	for _, str := range strs {
+		set[str] = struct{}{}
+	}
+	return len(set) == len(strs)
 }
 
 // Take2 takes two coins of the same color.
@@ -351,17 +236,18 @@ func (i *Impl) Take2(gameID string, userID string, color string) (string, error)
 
 	m := mover{gameID: gameID, userID: userID, db: i.db}
 	return m.Move(func(tx *TX) (string, string, error) {
-		if m.game.State != play {
+		if m.State() != play {
 			return "", "", errors.New("can't do that right now")
 		}
 
 		limit := map[string]int{color: 4}
 		delta := map[string]int{color: 2}
-		if err := transferCoins(tx, userID, limit, delta); err != nil {
+
+		if err := m.EarnCoins(tx, limit, delta); err != nil {
 			return "", "", err
 		}
 
-		return nextPlayer(m.players, m.index)
+		return m.NextPlayer()
 	})
 }
 
@@ -369,57 +255,45 @@ func (i *Impl) Take2(gameID string, userID string, color string) (string, error)
 func (i *Impl) Reserve(gameID string, userID string, tier int, index int) (string, error) {
 	m := mover{gameID: gameID, userID: userID, db: i.db}
 	return m.Move(func(tx *TX) (string, string, error) {
-		if m.game.State != "play" {
+		if m.State() != play {
 			return "", "", errors.New("can't do that right now")
 		}
 
 		// Make sure the player does not already have too many reserved cards.
-		_, reserved, err := tx.GetPlayerCards(userID)
+		_, reservedIDs, err := tx.GetPlayerCards(userID)
 		if err != nil {
 			return "", "", err
 		}
-		if len(reserved) >= 3 {
+		if len(reservedIDs) >= 3 {
 			return "", "", errors.New("too many cards already reserved")
 		}
 
-		// Grab the card that's currently in that position.
-		// TODO: Handle reserving directly off the top of the deck?
-		cards, err := tx.GetCards(tier)
-		if err != nil {
-			return "", "", err
-		}
-		card := cards[index]
-		if card == "" {
-			return "", "", errors.New("no card there")
-		}
-
-		// Remove it from the board and replace with the next one from the deck.
-		newcard, err := tx.GetTopCard(tier)
-		if err != nil {
-			return "", "", err
-		}
-		if newcard != "" {
-			err = tx.TransferCard(tier, index, newcard)
-		} else {
-			err = tx.RemoveCard(tier, index)
-		}
+		// Grab the ID of the card that's currently in that position.
+		// TODO: Handle reserving directly off the top of the deck.
+		card, err := m.GetCardID(tx, tier, index)
 		if err != nil {
 			return "", "", err
 		}
 
 		// Insert it to the player's hand.
-		if err := tx.InsertPlayerCard(userID, card, true); err != nil {
+		reserved := true
+		if err := tx.InsertPlayerCard(userID, card, reserved); err != nil {
+			return "", "", err
+		}
+
+		// Replace it on the board.
+		if err := m.DealCard(tx, tier, index); err != nil {
 			return "", "", err
 		}
 
 		// Give the player a wildcard coin if we can.
 		delta := map[string]int{wild: 1}
-		err = transferCoins(tx, userID, delta, delta)
+		err = m.EarnCoins(tx, delta, delta)
 		if err != nil && err != ErrInsufficientCoins {
 			return "", "", err
 		}
 
-		return nextPlayer(m.players, m.index)
+		return m.NextPlayer()
 	})
 }
 
@@ -427,166 +301,234 @@ func (i *Impl) Reserve(gameID string, userID string, tier int, index int) (strin
 func (i *Impl) Buy(gameID string, userID string, tier int, index int) (string, error) {
 	m := mover{gameID: gameID, userID: userID, db: i.db}
 	return m.Move(func(tx *TX) (string, string, error) {
-		if m.game.State != "play" {
+		if m.State() != play {
 			return "", "", errors.New("can't do that right now")
 		}
 
 		// Grab the card that's currently in that position.
-		cards, err := tx.GetCards(tier)
+		cardID, err := m.GetCardID(tx, tier, index)
 		if err != nil {
 			return "", "", err
-		}
-		cardID := cards[index]
-		if cardID == "" {
-			return "", "", errors.New("no card there")
 		}
 		card, ok := cardFromID(cardID)
 		if !ok {
 			return "", "", errors.New("bogus card ID")
 		}
 
-		// Pay the cost of the card.
-		cardIDs, _, err := tx.GetPlayerCards(userID)
+		// Get the current card count.
+		cards, err := m.GetCardCounts(tx)
 		if err != nil {
-			return "", "", err
-		}
-		pcards, err := partitionCounts(cardIDs)
-		if err != nil {
-			return "", "", err
-		}
-		if err := payCost(tx, userID, pcards, card.cost); err != nil {
 			return "", "", err
 		}
 
-		// Remove it from the board and replace with the next one from the deck.
-		newcard, err := tx.GetTopCard(tier)
-		if err != nil {
-			return "", "", err
-		}
-		if newcard != "" {
-			err = tx.TransferCard(tier, index, newcard)
-		} else {
-			err = tx.RemoveCard(tier, index)
-		}
-		if err != nil {
+		// Pay the cost of the card.
+		if err := m.PayCost(tx, cards, card.cost); err != nil {
 			return "", "", err
 		}
 
 		// Insert it to the player's hand.
-		if err := tx.InsertPlayerCard(userID, cardID, false); err != nil {
+		reserved := false
+		if err := tx.InsertPlayerCard(userID, cardID, reserved); err != nil {
+			return "", "", err
+		}
+		cards[card.color]++
+
+		// Replace it on the board.
+		if err := m.DealCard(tx, tier, index); err != nil {
 			return "", "", err
 		}
 
-		// TODO: does this player now have enough cards to pick a noble?
-		// TODO: is this the last player, and if so has someone won the game?
-		a syntax error is here
-
-		return nextPlayer(m.players, m.index)
+		return nextState(&m, tx, cards)
 	})
 }
 
-func partitionCounts(ids []string) (map[string]int, error) {
-	ret := map[string]int{}
-	for _, id := range ids {
-		card, ok := cardFromID(id)
-		if !ok {
-			return nil, errors.New("bogus card id")
+//
+// Helper functions.
+//
+
+// NextState returns the next state to transition to after a player buys a card.
+func nextState(m *mover, tx *TX, cards map[string]int) (string, string, error) {
+	// Does this player now have enough cards to pick a noble? If yes, give them
+	// time to pick one.
+	can, err := m.CanAffordNoble(tx, cards)
+	if err != nil {
+		return "", "", err
+	}
+	if can {
+		return picknoble, m.userID, nil
+	}
+
+	// Is this the last player, and if so has someone won the game? If so
+	// stop playing and let them know they won.
+	over, err := isGameOver(tx)
+	if err != nil {
+		return "", "", err
+	}
+	if over {
+		return gameover, m.userID, nil
+	}
+
+	// Otherwise just go to the next player's turn.
+	return m.NextPlayer()
+}
+
+// IsGameOver returns true if the game is now over.
+func isGameOver(tx *TX) (bool, error) {
+	players, err := getPlayers(tx)
+	if err != nil {
+		return false, err
+	}
+
+	for _, p := range players {
+		if p.Points >= 15 {
+			return true, nil
 		}
-		ret[card.color]++
+	}
+
+	return false, nil
+}
+
+// GetTable gets information about the table.
+func getTable(tx *TX) (*Table, error) {
+	coins, err := tx.GetCoins()
+	if err != nil {
+		return nil, err
+	}
+
+	nobleIDs, err := tx.GetNobles()
+	if err != nil {
+		return nil, err
+	}
+	nobles, err := ToNobles(nobleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	cards, err := getCards(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	decks, err := tx.GetDecks()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Table{
+		Coins:  coins,
+		Nobles: nobles,
+		Cards:  cards,
+		Decks:  decks,
+	}, nil
+}
+
+// GetCards gets the cards currently on the table.
+func getCards(tx *TX) ([][]*Card, error) {
+	cards := [][]*Card{}
+	for tier := 1; tier <= 3; tier++ {
+		ids, err := tx.GetCards(tier)
+		if err != nil {
+			return nil, err
+		}
+
+		row, err := ToCards(ids)
+		if err != nil {
+			return nil, err
+		}
+
+		cards = append(cards, row)
+	}
+	return cards, nil
+}
+
+// GetPlayers gets data about the players in this game.
+func getPlayers(tx *TX) ([]*Player, error) {
+	userIDs, err := tx.GetPlayers()
+	if err != nil {
+		return nil, err
+	}
+
+	players := []*Player{}
+
+	for _, userID := range userIDs {
+		player, err := getPlayer(tx, userID)
+		if err != nil {
+			return nil, err
+		}
+		players = append(players, player)
+	}
+
+	return players, nil
+}
+
+// GetPlayer gets data about the given player.
+func getPlayer(tx *TX, userID string) (*Player, error) {
+	coins, err := tx.GetPlayerCoins(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	nobleIDs, err := tx.GetPlayerNobles(userID)
+	if err != nil {
+		return nil, err
+	}
+	nobles, err := ToNobles(nobleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	cardIDs, reservedIDs, err := tx.GetPlayerCards(userID)
+	if err != nil {
+		return nil, err
+	}
+	cards, err := partitionCards(cardIDs)
+	if err != nil {
+		return nil, err
+	}
+	reserved, err := ToCards(reservedIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	points := score(nobles, cards)
+
+	return &Player{
+		ID:       userID,
+		Coins:    coins,
+		Nobles:   nobles,
+		Cards:    cards,
+		Reserved: reserved,
+		Points:   points,
+	}, nil
+}
+
+// Partition partitions a player's cards by color.
+func partitionCards(ids []string) (map[string][]*Card, error) {
+	ret := map[string][]*Card{}
+	for _, id := range ids {
+		card, err := ToCard(id)
+		if err != nil {
+			return nil, err
+		}
+
+		ret[card.Color] = append(ret[card.Color], card)
 	}
 	return ret, nil
 }
 
-func transferCoins(tx *TX, userID string, limits, coins map[string]int) error {
-	bank, err := tx.GetCoins()
-	if err != nil {
-		return err
-	}
-	purse, err := tx.GetPlayerCoins(userID)
-	if err != nil {
-		return err
+// Score calculates the current score for a player.
+func score(nobles []*Noble, cards map[string][]*Card) int {
+	points := 0
+
+	for _, noble := range nobles {
+		points += noble.Points
 	}
 
-	for color, limit := range limits {
-		if bank[color] < limit {
-			return ErrInsufficientCoins
+	for _, row := range cards {
+		for _, card := range row {
+			points += card.Points
 		}
 	}
 
-	bankdiff := map[string]int{}
-	pursediff := map[string]int{}
-
-	for color, count := range coins {
-		bankdiff[color] = bank[color] - count
-		pursediff[color] = purse[color] + count
-	}
-
-	if err := tx.UpdateCoins(bankdiff); err != nil {
-		return err
-	}
-	if err := tx.UpdatePlayerCoins(userID, pursediff); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func payCost(tx *TX, userID string, cards map[string]int, cost map[string]int) error {
-	bank, err := tx.GetCoins()
-	if err != nil {
-		return err
-	}
-	purse, err := tx.GetPlayerCoins(userID)
-	if err != nil {
-		return err
-	}
-
-	bankdiff := map[string]int{}
-	pursediff := map[string]int{}
-	wildsneeded := 0
-
-	for color, needed := range cost {
-		needed -= cards[color]
-		if needed <= 0 {
-			continue
-		}
-
-		remaining := purse[color] - needed
-		if remaining >= 0 {
-			// We can directly afford it.
-			pursediff[color] = remaining
-			bankdiff[color] = bank[color] + needed
-		} else {
-			// Keep track of the difference, which we can make up with wilds.
-			pursediff[color] = 0
-			bankdiff[color] += purse[color]
-
-			wildsneeded -= remaining
-		}
-	}
-
-	if wildsneeded > 0 {
-		if wildsneeded > purse[wild] {
-			return ErrInsufficientCoins
-		}
-		pursediff[wild] = purse[wild] - wildsneeded
-		bankdiff[wild] = bank[wild] + wildsneeded
-	}
-
-	if err := tx.UpdateCoins(bankdiff); err != nil {
-		return err
-	}
-	if err := tx.UpdatePlayerCoins(userID, pursediff); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func nextPlayer(players []string, index int) (string, string, error) {
-	next := index + 1
-	if next >= len(players) {
-		next = 0
-	}
-	return play, players[next], nil
+	return points
 }
