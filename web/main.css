@@ -59,12 +59,38 @@ body {
   text-align: center;
   padding: 1em;
 }
+.game {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+}
 .table {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
   align-items: center;
+}
+.players {
+  width: 25%;
+  height: 100%;
+  border-left: 1px solid #AAA;
+  display: flex;
+  flex-direction: column;
+}
+.player {
+  margin: 2em 1.2em 0;
+}
+.player .top {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid #AAA;
+}
+.player .id {
+  font-weight: bold;
 }
 .nobles {
   display: flex;
@@ -79,7 +105,7 @@ body {
   display: flex;
   flex-direction: row;
 }
-.noble:hover {
+.table .noble:hover {
   box-shadow: 2px 2px gold, 2px -2px gold, -2px 2px gold, -2px -2px gold;
 }
 .noble .info {
@@ -108,6 +134,9 @@ body {
   display: flex;
   flex-direction: row;
 }
+.player .cards {
+  justify-content: space-evenly;
+}
 .card {
   width: 3.8em;
   height: 5.2em;
@@ -116,7 +145,21 @@ body {
   display: flex;
   flex-direction: column;
 }
-.card:hover {
+.smallcard {
+  width: 1.2em;
+  height: 1.75em;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 0.25em;
+  text-align: center;
+}
+.smallcard .num {
+  width: 1.2em;
+  height: 1.75em;
+  display: table-cell;
+  vertical-align: middle;
+}
+.table .card:hover {
   box-shadow: 2px 2px gold, 2px -2px gold, -2px 2px gold, -2px -2px gold;
 }
 .card .top {
@@ -161,6 +204,9 @@ body {
   display: flex;
   flex-direction: row;
 }
+.player .coins {
+  justify-content: space-evenly;
+}
 .coin {
   width: 2em;
   height: 2em;
@@ -170,7 +216,13 @@ body {
   border-style: solid;
   border-radius: 50%;
 }
-.coin:hover {
+.players .coin {
+  width: 1.3em;
+  height: 1.3em;
+  margin-left: unset;
+  margin-right: unset;
+}
+.table .coin:hover {
   box-shadow: 2px 2px gold, 2px -2px gold, -2px 2px gold, -2px -2px gold;
 }
 .coin .num {
@@ -178,6 +230,9 @@ body {
   height: 2em;
   display: table-cell;
   vertical-align: middle;
+}
+.players .coin .num {
+  font-size: 0.7em;
 }
 .red {
   color: white;
@@ -204,6 +259,11 @@ body {
   border-color: black;
   background-color: white;
 }
+.wild {
+  color: black;
+  border-color: black;
+  background-color: gold;
+}
 .redcard {
   background-color: #F0C0C0;
   border: 1px solid #FAFAFA;
@@ -217,7 +277,7 @@ body {
   border: 1px solid #FAFAFA;
 }
 .blackcard {
-  background-color: #DDD;
+  background-color: #999;
   border: 1px solid #FAFAFA;
 }
 .whitecard {

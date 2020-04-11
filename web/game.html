@@ -78,9 +78,45 @@
         document.getElementById('table').innerHTML = html
       }
 
+      function renderPlayerCards(cards) {
+        var html = '<div class="cards">'
+        for (color of ['green', 'white', 'blue', 'black', 'red']) {
+          var count = 0
+          if (cards[color]) {
+            count = cards[color].length
+          }
+          html += '<div class="smallcard ' + color + '">'
+          html += '<div class="num">' + count + '</div>'
+          html += '</div>'
+        }
+        html += '<div style="width: 1.2em; border: 1px solid transparent;"></div>'
+        html += '</div>'
+        return html
+      }
+
+      function renderPlayer(player) {
+        var html = '<div class="player">'
+        html += '<div class="top">'
+        html += '<div class="id">' + player.id + '</div>'
+        html += '<div class="points">score: ' + player.points + '</div>'
+        html += '</div>'
+        html += renderCoins(player.coins)
+        html += renderPlayerCards(player.cards)
+        html += '</div>'
+        return html
+      }
+
+      function renderPlayers(players) {
+        var html = ""
+        for (player of players) {
+          html += renderPlayer(player)
+        }
+        document.getElementById('players').innerHTML = html
+      }
+
       function render() {
-        // document.getElementById('hand').innerHTML = JSON.stringify(game)
         renderTable(game.table)
+        renderPlayers(game.players)
       }
 
       function update() {
@@ -102,13 +138,10 @@
         <span class="links"><a href="logout">logout</a></span>
       </div>
       <div class="main">
-
-<div style="width: 100%; flex-grow: 1; display: flex; flex-direction: row;">
-  <div id="table" class="table"></div>
-  <div id="players" style="height: 100%; width: 20%; border-left: 1px solid #AAA;"></div>
-</div>
-<div id="hand" style="width: 100%; height: 20%; border-top: 1px solid #AAA"></div>
-
+        <div class="game">
+          <div id="table" class="table"></div>
+          <div id="players" class="players"></div>
+        </div>
       </div>
     </div>
   </body>
