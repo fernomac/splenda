@@ -9,26 +9,6 @@ const othercolor = {
 var game = {}
 var selected = {}
 
-function renderNobles(nobles) {
-  var html = '<div class="nobles">'
-
-  for (noble of nobles) {
-    html += '<div class="noble">'
-    html += '<div class="info">'
-    html += '<div class="points">' + noble.points + '</div>'
-    html += '<div style="flex-grow: 1;"></div>'
-    for (color in noble.cost) {
-      html += '<div class="cost ' + color + '">'
-      html += noble.cost[color]
-      html += '</div>'
-    }
-    html += '</div></div>'
-  }
-
-  html += '</div>'
-  return html
-}
-
 function offset(el) {
   const left = window.pageXOffset || document.documentElement.scrollLeft
   const top = window.pageYOffset || document.documentElement.scrollTop
@@ -41,8 +21,11 @@ function offset(el) {
   }
 }
 
-function showMenu(id, tier, index) {
-  const menu = document.getElementById('menu')
+function showBuyMenu(id, tier, index) {
+  hideTake2Menu()
+  hideTake3Menu()
+
+  const menu = document.getElementById('buy-menu')
   const rect = offset(document.getElementById(id))
   menu.style.top = rect.top - 15
   if (tier == 0) {
@@ -57,9 +40,107 @@ function showMenu(id, tier, index) {
   selected.index = index
 }
 
-function hideMenu() {
-  const menu = document.getElementById('menu')
-  menu.style.display = 'none'
+function showTake3Menu() {
+  hideBuyMenu()
+  hideTake2Menu()
+
+  for (el of document.getElementsByName('take3')) {
+    el.disabled = false
+    el.checked = false
+  }
+
+  const menu = document.getElementById('take3-menu')
+  const rect = offset(document.getElementById('take3-button'))
+  menu.style.top = rect.top - 150
+  menu.style.left = rect.right + 15
+  menu.style.display = 'flex'
+}
+
+function showTake2Menu() {
+  hideBuyMenu()
+  hideTake3Menu()
+
+  for (el of document.getElementsByName('take2')) {
+    el.disabled = false
+    el.checked = false
+  }
+
+  const menu = document.getElementById('take2-menu')
+  const rect = offset(document.getElementById('take2-button'))
+  menu.style.top = rect.top - 150
+  menu.style.left = rect.right + 15
+  menu.style.display = 'flex'
+}
+
+function hideBuyMenu() {
+  document.getElementById('buy-menu').style.display = 'none'
+}
+
+function hideTake3Menu() {
+  document.getElementById('take3-menu').style.display = 'none'
+}
+
+function hideTake2Menu() {
+  document.getElementById('take2-menu').style.display = 'none'
+}
+
+function threeChecked() {
+  var count = 0
+  for (el of document.getElementsByName('take3')) {
+    if (el.checked) {
+      count++
+    }
+  }
+  return count >= 3
+}
+
+function validateTake3() {
+  var enough = false
+  if (threeChecked()) {
+    enough = true
+  }
+  for (el of document.getElementsByName('take3')) {
+    el.disabled = (enough && !el.checked)
+  }
+}
+
+function oneChecked() {
+  var count = 0
+  for (el of document.getElementsByName('take2')) {
+    if (el.checked) {
+      count++
+    }
+  }
+  return count >= 1
+}
+
+function validateTake2() {
+  var enough = false
+  if (oneChecked()) {
+    enough = true
+  }
+  for (el of document.getElementsByName('take2')) {
+    el.disabled = (enough && !el.checked)
+  }
+}
+
+function renderNobles(nobles) {
+  var html = ''
+
+  for (noble of nobles) {
+    html += '<div class="noble">'
+    html += '<div class="info">'
+    html += '<div class="points">' + noble.points + '</div>'
+    html += '<div style="flex-grow: 1;"></div>'
+    for (color in noble.cost) {
+      html += '<div class="cost ' + color + '">'
+      html += noble.cost[color]
+      html += '</div>'
+    }
+    html += '</div></div>'
+  }
+
+  document.getElementById('nobles').innerHTML = html
 }
 
 function renderCards(tier, cards, player) {
@@ -70,7 +151,7 @@ function renderCards(tier, cards, player) {
     html += '<div id="' + id + '" class="card ' + card.color + 'card'
     if (userid === game.current && (tier > 0 || userid === player)) {
       html += ' buyable" '
-      html += 'onclick="showMenu(\'' + id + '\', ' + tier + ', ' + i + ')'
+      html += 'onclick="showBuyMenu(\'' + id + '\', ' + tier + ', ' + i + ')'
     }
     html += '">'
     html += '<div class="top">'
@@ -90,24 +171,29 @@ function renderCards(tier, cards, player) {
 }
 
 function renderCoins(coins) {
-  var html = '<div class="coins">'
+  var html = ''
   for (color of ['green', 'white', 'blue', 'black', 'red', 'wild']) {
     html += '<div class="coin ' + color + '"><div class="num">' + coins[color] + '</div></div>'
   }
-  html += '</div>'
   return html
 }
 
-function renderTable(table) {
-  var html = renderNobles(table.nobles)
-  html += '<div>'
-  html += renderCards(3, table.cards[2])
-  html += renderCards(2, table.cards[1])
-  html += renderCards(1, table.cards[0])
-  html += '</div>'
-  html += renderCoins(table.coins)
+function renderTableCards(cards) {
+  var html = ''
+  for (i of [2, 1, 0]) {
+    html += renderCards(i+1, cards[i])
+  }
+  document.getElementById('cards').innerHTML = html
+}
 
-  document.getElementById('table').innerHTML = html
+function renderTableCoins(coins) {
+  document.getElementById('coins').innerHTML = renderCoins(coins)
+}
+
+function renderTable(table) {
+  renderNobles(table.nobles)
+  renderTableCards(table.cards)
+  renderTableCoins(table.coins)
 }
 
 function renderPlayerCards(cards) {
@@ -135,8 +221,9 @@ function renderPlayer(player) {
   }
   html += '</div>'
   html += '<div class="points">score: ' + player.points + '</div>'
-  html += '</div>'
+  html += '</div><div class="coins">'
   html += renderCoins(player.coins)
+  html += '</div>'
   html += renderPlayerCards(player.cards)
   html += renderCards(0, player.reserved, player.id)
   html += '</div>'
@@ -158,11 +245,59 @@ function render() {
 }
 
 function update() {
-  fetch('/api/games/'+gameid).then(function(res) {
-    return res.json()
-  }).then(function(json) {
+  fetch('/api/games/'+gameid).then((res) => res.json()).then((json) => {
     game = json
     render()
+
+    if (game.current != userid) {
+      setTimeout(update, 1000)
+    }
+  })
+}
+
+function take3() {
+  var colors = []
+  for (el of document.getElementsByName('take3')) {
+    if (el.checked) {
+      colors.push(el.value)
+    }
+  }
+
+  fetch('/api/games/'+gameid+'/take3', {
+    method: 'POST',
+    body: JSON.stringify({'colors': colors}),
+  }).then((res) => {
+    if (res.ok) {
+      hideTake3Menu()
+      update()
+    } else {
+      res.text().then(function(body) {
+        alert(body)
+      })
+    }
+  })
+}
+
+function take2() {
+  var color = ''
+  for (el of document.getElementsByName('take2')) {
+    if (el.checked) {
+      color = el.value
+    }
+  }
+
+  fetch('/api/games/'+gameid+'/take2', {
+    method: 'POST',
+    body: JSON.stringify({'color': color}),
+  }).then((res) => {
+    if (res.ok) {
+      hideTake2Menu()
+      update()
+    } else {
+      res.text().then(function(body) {
+        alert(body)
+      })
+    }
   })
 }
 
@@ -172,7 +307,7 @@ function reserve() {
     body: JSON.stringify(selected),
   }).then(function(res) {
     if (res.ok) {
-      hideMenu()
+      hideBuyMenu()
       update()
     } else {
       res.text().then(function(body) {
@@ -188,7 +323,7 @@ function buy() {
     body: JSON.stringify(selected),
   }).then(function(res) {
     if (res.ok) {
-      hideMenu()
+      hideBuyMenu()
       update()
     } else {
       res.text().then(function(body) {

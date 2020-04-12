@@ -21,15 +21,48 @@
       </div>
       <div class="main">
         <div class="game">
-          <div id="table" class="table"></div>
+          <div class="table">
+            <div id="nobles" class="nobles"></div>
+            <div id="cards"></div>
+            <div class="coinholder">
+              <div class="coinside">
+                <input id="take3-button" type="button" class="button" value="take 3" onclick="showTake3Menu()">
+                <br/>
+                <input id="take2-button" type="button" class="button" value="take 2" onclick="showTake2Menu()">
+              </div>
+              <div id="coins" class="coins"></div>
+              <div class="coinside">
+              </div>
+            </div>
+          </div>
           <div id="players" class="players"></div>
         </div>
       </div>
     </div>
-    <div id="menu" class="menu">
+    <div id="buy-menu" class="menu">
       <input id="reserve" type="button" class="button" value="reserve" onclick="reserve()">
       <input type="button" class="button" value="buy" onclick="buy()">
-      <input type="button" class="button" value="cancel" onclick="hideMenu()">
+      <input type="button" class="button" value="cancel" onclick="hideBuyMenu()">
+    </div>
+    <div id="take3-menu" class="menu">
+      <div><input type="checkbox" name="take3" value="green" onchange="validateTake3()">: green</div>
+      <div><input type="checkbox" name="take3" value="white" onchange="validateTake3()">: white</div>
+      <div><input type="checkbox" name="take3" value="blue" onchange="validateTake3()">: blue</div>
+      <div><input type="checkbox" name="take3" value="black" onchange="validateTake3()">: black</div>
+      <div><input type="checkbox" name="take3" value="red" onchange="validateTake3()">: red</div>
+      <div style="height: 1em; width: 7em;"></div>
+      <input type="button" class="button" value="take" onclick="take3()">
+      <input type="button" class="button" value="cancel" onclick="hideTake3Menu()">
+    </div>
+    <div id="take2-menu" class="menu">
+      <div><input type="checkbox" name="take2" value="green" onchange="validateTake2()">: green</div>
+      <div><input type="checkbox" name="take2" value="white" onchange="validateTake2()">: white</div>
+      <div><input type="checkbox" name="take2" value="blue" onchange="validateTake2()">: blue</div>
+      <div><input type="checkbox" name="take2" value="black" onchange="validateTake2()">: black</div>
+      <div><input type="checkbox" name="take2" value="red" onchange="validateTake2()">: red</div>
+      <div style="height: 1em; width: 7em;"></div>
+      <input type="button" class="button" value="take" onclick="take2()">
+      <input type="button" class="button" value="cancel" onclick="hideTake2Menu()">
     </div>
   </body>
 </html>

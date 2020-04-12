@@ -215,11 +215,20 @@ body {
   padding-top: 0.1em;
   margin-top: 0.1em;
 }
+.coinholder {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+}
+.coinside {
+  width: 10em;
+  text-align: center;
+}
 .coins {
   display: flex;
   flex-direction: row;
-}
-.player .coins {
   justify-content: space-evenly;
 }
 .coin {
@@ -307,6 +316,6 @@ body {
   flex-direction: column;
   padding: 0.7em;
 }
-.menu .button {
+.menu .button, .coinside .button {
   margin: 0.2em;
 }
