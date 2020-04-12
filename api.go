@@ -304,6 +304,7 @@ func (a *API) newGame(id string, res http.ResponseWriter, req *http.Request) {
 	game := GameSummary{}
 	if err := unmarshal(req.Body, &game); err != nil {
 		res.WriteHeader(400)
+		res.Write([]byte(err.Error() + "\n"))
 		return
 	}
 

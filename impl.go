@@ -77,6 +77,8 @@ func (i *Impl) NewGame(players []string) (string, error) {
 	}
 	defer tx.Close()
 
+	players = pick(players, len(players), i.rng)
+
 	// Set up the game table itself.
 	if err := tx.InsertGame(players[0]); err != nil {
 		return "", err
@@ -95,14 +97,14 @@ func (i *Impl) NewGame(players []string) (string, error) {
 		return "", err
 	}
 
-	nobles := pick(len(players)+1, i.rng)
+	nobles := shuffleNobles(len(players)+1, i.rng)
 	if err := tx.InsertNobles(nobles); err != nil {
 		return "", err
 	}
 
-	t1 := shuffle(tier1, i.rng)
-	t2 := shuffle(tier2, i.rng)
-	t3 := shuffle(tier3, i.rng)
+	t1 := shuffleCards(tier1, i.rng)
+	t2 := shuffleCards(tier2, i.rng)
+	t3 := shuffleCards(tier3, i.rng)
 
 	if err := tx.InsertCards(t1[:4], t2[:4], t3[:4]); err != nil {
 		return "", err

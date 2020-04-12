@@ -45,22 +45,24 @@ type rng interface {
 	Intn(n int) int
 }
 
-func pick(n int, rng rng) []string {
-	deck := []string{}
+func pick(set []string, n int, rng rng) []string {
 	ret := []string{}
+	for i := 0; i < n; i++ {
+		j := rng.Intn(len(set))
+		ret = append(ret, set[j])
+		set = append(set[:j], set[j+1:]...)
+	}
+	return ret
+}
 
+func shuffleNobles(n int, rng rng) []string {
+	deck := []string{}
 	for id := range nobles {
 		deck = append(deck, id)
 	}
-	sort.Strings(deck)
+	sort.Strings(deck) // To make things deterministic for tests.
 
-	for i := 0; i < n; i++ {
-		j := rng.Intn(len(deck))
-		ret = append(ret, deck[j])
-		deck = append(deck[:j], deck[j+1:]...)
-	}
-
-	return ret
+	return pick(deck, n, rng)
 }
 
 type card struct {
@@ -86,22 +88,14 @@ func cardFromID(id string) (card, bool) {
 	return card{}, false
 }
 
-func shuffle(cs map[string]card, rng rng) []string {
+func shuffleCards(cs map[string]card, rng rng) []string {
 	deck := []string{}
-	ret := []string{}
-
 	for id := range cs {
 		deck = append(deck, id)
 	}
-	sort.Strings(deck)
+	sort.Strings(deck) // To make things deterministic for tests.
 
-	for len(deck) > 0 {
-		j := rng.Intn(len(deck))
-		ret = append(ret, deck[j])
-		deck = append(deck[:j], deck[j+1:]...)
-	}
-
-	return ret
+	return pick(deck, len(deck), rng)
 }
 
 func noblemap(ns []noble) map[string]noble {
