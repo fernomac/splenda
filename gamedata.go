@@ -26,6 +26,7 @@ func isNormalColor(color string) bool {
 const (
 	play      = "play"
 	picknoble = "picknoble"
+	losecoin  = "losecoin"
 	gameover  = "gameover"
 )
 

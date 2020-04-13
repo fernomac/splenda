@@ -167,6 +167,8 @@ func (m *mover) EarnCoins(tx *TX, limits, coins map[string]int) error {
 		return err
 	}
 
+	// TODO: If player has more than 10 coins now, make then give some back.
+
 	return nil
 }
 
