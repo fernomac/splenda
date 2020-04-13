@@ -13,7 +13,7 @@ func TestTwoPlayers(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	id, err := impl.NewGame([]string{"user1", "user2"})
+	id, err := impl.NewGame("user1", []string{"user1", "user2"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,12 +22,12 @@ func TestTwoPlayers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertGameState(t, game, id, play, "user1")
+	assertGameState(t, game, id, play, "user2")
 	assertCoins(t, game, map[string]int{red: 4, green: 4, blue: 4, black: 4, white: 4, wild: 5})
-	assertNobles(t, game, []string{"catherine_of_medici", "macchiavelli", "suleiman_i"})
-	assertCards(t, game.Table.Cards[2], []string{"3_7_3_4", "3_5_33_2", "3_5_33_0", "3_6_23_0"})
-	assertCards(t, game.Table.Cards[1], []string{"2_23_2_3", "2_5_0", "2_5_2", "2_5_3_0"})
-	assertCards(t, game.Table.Cards[0], []string{"1_2_31_4", "1_3_21_3", "1_22_3", "1_22_1_0"})
+	assertNobles(t, game, []string{"macchiavelli", "charles_v", "catherine_of_medici"})
+	assertCards(t, game.Table.Cards[2], []string{"3_7_3_0", "3_6_23_1", "3_7_3_1", "3_5_33_4"})
+	assertCards(t, game.Table.Cards[1], []string{"2_6_2", "2_3_22_1", "2_23_2_4", "2_5_3_2"})
+	assertCards(t, game.Table.Cards[0], []string{"1_4_3", "1_22_1", "1_22_0", "1_2_31_3"})
 
 	// TODO: Make some moves.
 }
@@ -36,11 +36,11 @@ func assertGameState(t *testing.T, game *Game, id string, state string, current 
 	if game.ID != id {
 		t.Errorf("bad ID: expected %v, got %v", id, game.ID)
 	}
-	if game.State != play {
-		t.Errorf("bad state: expected %v, got %v", play, game.State)
+	if game.State != state {
+		t.Errorf("bad state: expected %v, got %v", state, game.State)
 	}
-	if game.Current != "user1" {
-		t.Errorf("bad current player: expected %v, got %v", "user1", game.Current)
+	if game.Current != current {
+		t.Errorf("bad current player: expected %v, got %v", current, game.Current)
 	}
 }
 

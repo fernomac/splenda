@@ -46,6 +46,10 @@ type rng interface {
 	Intn(n int) int
 }
 
+func shuffle(set []string, rng rng) []string {
+	return pick(set, len(set), rng)
+}
+
 func pick(set []string, n int, rng rng) []string {
 	ret := []string{}
 	for i := 0; i < n; i++ {
@@ -56,7 +60,7 @@ func pick(set []string, n int, rng rng) []string {
 	return ret
 }
 
-func shuffleNobles(n int, rng rng) []string {
+func pickNobles(n int, rng rng) []string {
 	deck := []string{}
 	for id := range nobles {
 		deck = append(deck, id)

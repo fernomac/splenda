@@ -35,8 +35,20 @@ func NewImplSeed(db *DB, seed int64) *Impl {
 }
 
 // ListGames lists all the games that the given user is in.
-func (i *Impl) ListGames(userID string) (map[string][]string, error) {
-	return i.db.ListGames(userID)
+func (i *Impl) ListGames(userID string) ([]*GameSummary, error) {
+	games, err := i.db.ListGames(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := []*GameSummary{}
+	for gameID, players := range games {
+		ret = append(ret, &GameSummary{
+			ID:      gameID,
+			Players: players,
+		})
+	}
+	return ret, nil
 }
 
 func newID() string {
@@ -61,12 +73,18 @@ func numCoins(players []string) int {
 }
 
 // NewGame creates a new game.
-func (i *Impl) NewGame(players []string) (string, error) {
+func (i *Impl) NewGame(userID string, players []string) (string, error) {
+	if find(userID, players) == -1 {
+		return "", errors.New("you must be one of the players")
+	}
 	if len(players) < 2 {
 		return "", errors.New("need at least two players")
 	}
 	if len(players) > 4 {
 		return "", errors.New("no more than four players")
+	}
+	if !unique(players) {
+		return "", errors.New("players must be unique")
 	}
 
 	gameID := newID()
@@ -77,7 +95,7 @@ func (i *Impl) NewGame(players []string) (string, error) {
 	}
 	defer tx.Close()
 
-	players = pick(players, len(players), i.rng)
+	players = shuffle(players, i.rng)
 
 	// Set up the game table itself.
 	if err := tx.InsertGame(players[0]); err != nil {
@@ -97,7 +115,7 @@ func (i *Impl) NewGame(players []string) (string, error) {
 		return "", err
 	}
 
-	nobles := shuffleNobles(len(players)+1, i.rng)
+	nobles := pickNobles(len(players)+1, i.rng)
 	if err := tx.InsertNobles(nobles); err != nil {
 		return "", err
 	}

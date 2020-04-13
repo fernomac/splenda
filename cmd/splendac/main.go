@@ -22,7 +22,7 @@ var cmds = map[string]func(*args){
 			return
 		}
 
-		_, err := post(a.url+"/api/users", "", splenda.Login{
+		err := post(a.url+"/api/users", "", splenda.Login{
 			ID:       a.args[0],
 			Password: a.args[1],
 		}, nil)
@@ -37,21 +37,16 @@ var cmds = map[string]func(*args){
 			return
 		}
 
-		res, err := post(a.url+"/api/login", "", splenda.Login{
+		sid := splenda.SID{}
+		err := post(a.url+"/api/login", "", splenda.Login{
 			ID:       a.args[0],
 			Password: a.args[1],
-		}, nil)
+		}, &sid)
 		if err != nil {
 			panic(err)
 		}
 
-		cs := res.Cookies()
-		if len(cs) == 0 || cs[0].Name != "sid" {
-			panic("no sid cookie returned")
-		}
-
-		sid := cs[0].Value
-		if err := ioutil.WriteFile(".sid", []byte(sid), os.FileMode(0600)); err != nil {
+		if err := ioutil.WriteFile(".sid", []byte(sid.SID), os.FileMode(0600)); err != nil {
 			panic(err)
 		}
 	},
@@ -83,7 +78,7 @@ var cmds = map[string]func(*args){
 
 	"newgame": func(a *args) {
 		result := splenda.GameSummary{}
-		_, err := post(a.url+"/api/games", a.sid, splenda.GameSummary{
+		err := post(a.url+"/api/games", a.sid, splenda.GameSummary{
 			Players: a.args,
 		}, &result)
 		if err != nil {
@@ -175,7 +170,7 @@ var cmds = map[string]func(*args){
 		}
 
 		ts := splenda.TS{}
-		_, err := post(a.url+"/api/games/"+a.args[0]+"/take3", a.sid, splenda.Take3{
+		err := post(a.url+"/api/games/"+a.args[0]+"/take3", a.sid, splenda.Take3{
 			Colors: a.args[1:],
 		}, &ts)
 		if err != nil {
@@ -192,7 +187,7 @@ var cmds = map[string]func(*args){
 		}
 
 		ts := splenda.TS{}
-		_, err := post(a.url+"/api/games/"+a.args[0]+"/take2", a.sid, splenda.Take2{
+		err := post(a.url+"/api/games/"+a.args[0]+"/take2", a.sid, splenda.Take2{
 			Color: a.args[1],
 		}, &ts)
 		if err != nil {
@@ -217,7 +212,7 @@ var cmds = map[string]func(*args){
 		}
 
 		ts := splenda.TS{}
-		_, err = post(a.url+"/api/games/"+a.args[0]+"/reserve", a.sid, splenda.Buy{
+		err = post(a.url+"/api/games/"+a.args[0]+"/reserve", a.sid, splenda.Buy{
 			Tier:  tier,
 			Index: index,
 		}, &ts)
@@ -243,7 +238,7 @@ var cmds = map[string]func(*args){
 		}
 
 		ts := splenda.TS{}
-		_, err = post(a.url+"/api/games/"+a.args[0]+"/buy", a.sid, splenda.Buy{
+		err = post(a.url+"/api/games/"+a.args[0]+"/buy", a.sid, splenda.Buy{
 			Tier:  tier,
 			Index: index,
 		}, &ts)

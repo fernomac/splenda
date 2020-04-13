@@ -41,15 +41,15 @@ func get(url string, sid string, result interface{}) error {
 	return nil
 }
 
-func post(url string, sid string, body interface{}, result interface{}) (*http.Response, error) {
+func post(url string, sid string, body interface{}, result interface{}) error {
 	bs, err := json.Marshal(body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(bs))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if sid != "" {
 		req.AddCookie(&http.Cookie{
@@ -60,25 +60,25 @@ func post(url string, sid string, body interface{}, result interface{}) (*http.R
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	bs, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if res.StatusCode >= 300 {
-		return nil, fmt.Errorf("http request failed: %v: %v", res.Status, string(bs))
+		return fmt.Errorf("http request failed: %v: %v", res.Status, string(bs))
 	}
 
 	if result != nil {
 		if err := json.Unmarshal(bs, result); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	return res, nil
+	return nil
 }
 
 func delete(url string, sid string) error {

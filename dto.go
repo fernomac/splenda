@@ -13,6 +13,11 @@ type Login struct {
 	Password string `json:"pw"`
 }
 
+// SID is a session ID.
+type SID struct {
+	SID string `json:"sid"`
+}
+
 // GameSummary lists the ID and players of a given game.
 type GameSummary struct {
 	ID      string   `json:"id"`
