@@ -75,9 +75,9 @@ func (a *api) Login(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(303)
 }
 
-// Logout handles POST /logout, the browser-based log-out endpoint.
+// Logout handles GET /logout, the browser-based log-out endpoint.
 func (a *api) Logout(res http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
+	if req.Method != http.MethodGet {
 		res.WriteHeader(405)
 		return
 	}
@@ -108,14 +108,7 @@ func (a *api) Game(res http.ResponseWriter, req *http.Request) {
 
 	gameID := strings.TrimPrefix(req.URL.Path, "/games/")
 
-	switch req.URL.Query().Get("v") {
-	case "", "1":
-		renderTemplate("web/game.html", gameID, userID, res)
-	case "2":
-		renderTemplate("web/game2.html", gameID, userID, res)
-	default:
-		res.WriteHeader(400)
-	}
+	renderTemplate("web/game.html", gameID, userID, res)
 }
 
 // RenderFile renders a non-template file.

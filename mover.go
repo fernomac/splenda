@@ -104,6 +104,10 @@ func (m *mover) IsRoundOver() bool {
 
 // GetCardID gets the ID of the card at a given index.
 func (m *mover) GetCardID(tx *TX, tier int, index int) (string, error) {
+	if tier == 0 {
+		return m.GetReservedCardID(tx, index)
+	}
+
 	cards, err := tx.GetCards(tier)
 	if err != nil {
 		return "", err
@@ -113,6 +117,17 @@ func (m *mover) GetCardID(tx *TX, tier int, index int) (string, error) {
 		return "", errors.New("no card there")
 	}
 	return card, nil
+}
+
+func (m *mover) GetReservedCardID(tx *TX, index int) (string, error) {
+	_, reserved, err := tx.GetPlayerCards(m.userID)
+	if err != nil {
+		return "", err
+	}
+	if index < 0 || index >= len(reserved) {
+		return "", errors.New("no card there")
+	}
+	return reserved[index], nil
 }
 
 // GetCardCounts gets the number of cards of each color that the player has.

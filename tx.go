@@ -385,6 +385,16 @@ func (t *TX) UpdatePlayerCoins(userID string, coins map[string]int) error {
 	return nil
 }
 
+// UpdatePlayerCard updates a card in the player's hand.
+func (t *TX) UpdatePlayerCard(userID string, cardID string, reserved bool) error {
+	q := "UPDATE player_cards SET reserved = $1 WHERE game_id = $2 AND user_id = $3 AND card_id = $4"
+	_, err := t.tx.Exec(q, reserved, t.gameID, userID, cardID)
+	if err != nil {
+		panic(err)
+	}
+	return err
+}
+
 // UpdateGame updates the game state after a move.
 func (t *TX) UpdateGame(curTS string, newstate string, newcurrent string) (string, error) {
 	q := "UPDATE games SET ts = ts+1, state = $1, current = $2 WHERE id = $3 AND ts = $4 RETURNING ts"
@@ -416,7 +426,7 @@ func (t *TX) TransferCard(tier int, index int, cardID string) error {
 
 // DeleteCard removes a card from the board when the corresponding deck is empty.
 func (t *TX) DeleteCard(tier int, index int) error {
-	q := "DELETE FROM game_cards WHERE game_id = $2 AND tier = $3 AND index = $4"
+	q := "DELETE FROM game_cards WHERE game_id = $1 AND tier = $2 AND index = $3"
 	_, err := t.tx.Exec(q, t.gameID, tier, index)
 	return err
 }

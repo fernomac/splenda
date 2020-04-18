@@ -1,33 +1,30 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>Splenda</title>
-    <link href="assets/main.css" rel="stylesheet" type="text/css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="/assets/main.css" rel="stylesheet" type="text/css">
   </head>
+
   <body>
-    <div class="root">
+    <div id="root" class="flex-column full-height">
       <div class="top-bar">
-        <span class="logo">Splenda</span>
-        <span class="links"><a href="signup">sign up</a></span>
+        <div>Splenda</div>
+        <div><input type="button" class="button" value="sign up" onclick="window.location='/signup'"></div>
       </div>
-      <div class="main">
-        <div class="center">
 
-<div style="margin-bottom: 20px;">Log in to play Splenda</div>
-<div>
-  <form action="/login" method="post" style="margin: 0;">
-    <table>
-      <tr><td>username:</td><td>&nbsp;</td><td><input name="id" type="text"></td></tr>
-      <tr><td>password:</td><td>&nbsp;</td><td><input name="pw" type="password"></td></tr>
-    </table>
-    <br/>
-    <input type="submit" value="login" class="button">
-  </form>
-</div>
-
+      <form action="/login" method="post" class="full-height" style="margin: 0;">
+        <div class="flex-column-center full-height">
+          <div style="margin-bottom: 1em;">Log in to play Splenda</div>
+          <table style="margin-bottom: 1em;">
+            <tr><td>username:</td><td>&nbsp;</td><td><input name="id" type="text"></td></tr>
+            <tr><td>password:</td><td>&nbsp;</td><td><input name="pw" type="password"></td></tr>
+          </table>
+          <input type="submit" value="login" class="button">
         </div>
-      </div>
+      </form>
+
     </div>
   </body>
 </html>

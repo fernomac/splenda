@@ -1,132 +1,40 @@
-<html>
+<!DOCTYPE html>
+<html class="full-height">
   <head>
     <title>Splenda</title>
-    <link href="/assets/main.css" rel="stylesheet" type="text/css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script>
-      function newGame() {
-        const players = document.getElementsByName('players')
-        const ids = []
-        for (player of players) {
-          if (player.checked) {
-            ids.push(player.value)
-          }
-        }
-        fetch('/api/games', {
-          method: 'POST',
-          body: JSON.stringify({'players': ids})
-        }).then((res) => {
-          if (res.ok) {
-            res.json().then((res) => {
-              const id = res.id
-              window.location = '/games/'+id
-            })
-          } else {
-            res.text().then((res) => {
-              alert(res)
-            })
-          }
-        })
-      }
-
-      function hideNewGameMenu() {
-        document.getElementById('new-menu').style.display = 'none'
-      }
-
-      function showNewGameMenu() {
-        fetch('/api/users').then((res) => res.json()).then((res) => {
-          var html = ""
-          for (user of res.users) {
-            html += '<div><input type="checkbox" name="players" value="' + user + '"> ' + user + '</div>'
-          }
-          document.getElementById('user-list').innerHTML = html
-          document.getElementById('new-menu').style.display = 'flex'
-        })
-      }
-
-      function deleteGame(id) {
-        hideDeleteMenu()
-        fetch('/api/games/'+id, {
-          method: 'DELETE',
-        }).then((res) => {
-          if (res.ok) {
-            update()
-          } else {
-            res.text().then((text) => {
-              alert(text)
-            })
-          }
-        })
-      }
-
-      function hideDeleteMenu() {
-        document.getElementById('delete-menu').style.display = 'none'
-      }
-
-      function showDeleteMenu(id) {
-        document.getElementById('delete-button').onclick = function() { deleteGame(id) }
-        document.getElementById('delete-menu').style.display = 'flex'
-      }
-
-      function update() {
-        fetch('/api/games').then(function(res) {
-          return res.json()
-        }).then(function(body) {
-          var html = '<table>'
-          html += '<tr><th>Actions</th><th>Players</th><th><input type="button" value="New" onclick="showNewGameMenu()"></th></tr>'
-          if (body.games) {
-            for (game of body.games) {
-              html += '<tr><td>'
-              html += '<input type="button" value="play" onclick="window.location=\'/games/' + game.id + '\'"><br/>'
-              html += '<input type="button" value="delete" onclick="showDeleteMenu(\'' + game.id + '\')">'
-              html += '</td><td>'
-              var first = true
-              for (player of game.players) {
-                if (first) {
-                  first = false
-                } else {
-                  html += ', '
-                }
-                html += player
-              }
-              html +='</td><td></td></tr>'
-            }
-          }
-          html += '</table>'
-          document.getElementById('table').innerHTML = html
-        })
-      }
-
-      window.onload = update
-    </script>
+    <link href="/assets/main.css" rel="stylesheet" type="text/css">
   </head>
-  <body>
-    <div class="root">
+
+  <body class="full-height">
+    <div id="root" class="flex-column full-height">
       <div class="top-bar">
-        <span class="logo">Splenda</span>
-        <span class="links"><a href="logout">logout</a></span>
+        <div>Splenda</div>
+        <div><input type="button" class="button" value="X" onclick="window.location='/logout'"></div>
       </div>
-      <div class="main">
-        <div class="center">
-          <div id="table" class="gamelist center">
-          </div>
-        </div>
+
+      <div class="flex-column-center full-height">
+        <table class="gametable">
+          <tr>
+            <th>Actions</th>
+            <th>Players</th>
+            <th><input type="button" class="button" value="New" @click="showNewMenu"></th>
+          </tr>
+          <template>
+            <game v-for="game in games"
+              :game="game"
+              :key="game.id"
+              @delete-menu="showDeleteMenu($event)">
+            </game>
+          </template>
+        </table>
+
+        <newmenu v-show="newMenu" :users="users" @hide="hideNewMenu"></newmenu>
+        <deletemenu v-show="deleteMenu" :id="deleteID" @hide="hideDeleteMenu"></deletemenu>
       </div>
     </div>
-    <div id="delete-menu" class="game-menu">
-      <div style="display: flex; flex-direction: row; justify-content: flex-end;">
-        <input type="button" value="X" onclick="hideDeleteMenu()">
-      </div>
-      <div style="font-weight: bold; text-align: center;">Confirm?</div>
-      <div style="margin-top: 1em; text-align: center;"><input type="button" id="delete-button" value="delete"></div>
-    </div>
-    <div id="new-menu" class="game-menu">
-      <div style="display: flex; flex-direction: row; justify-content: flex-end;">
-        <input type="button" value="X" onclick="hideNewGameMenu()">
-      </div>
-      <div id="user-list"></div>
-      <div style="margin-top: 1em; text-align: center;"><input type="button" value="begin" onclick="newGame()"></div>
-    </div>
+    <script src="/assets/vue.js"></script>
+    <script src="/assets/index.js"></script>
   </body>
 </html>

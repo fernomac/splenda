@@ -1,157 +1,130 @@
-html, body, .root, .main, .game {
-  height: 100%;
-  overflow-y: hidden;
+:root {
+  --background-color: #FAFAFA;
+  --highlight-color: rgba(0,127,255,0.075);
+  --noble-background-color: #DDD;
+  --border-color: #AAA;
+  --light-border-color: #EEE;
 }
 body {
-  background-color: #FAFAFA;
+  background-color: var(--background-color);
   font-family: sans-serif;
   margin: 0;
-}
-.root {
-  display: flex;
-  flex-direction: column;
 }
 .top-bar {
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
   align-items: center;
-  padding: 0.5em;
-  background-color: #89d6c9;
-  border-bottom: 1px solid #AAA;
+  padding: 0.25em 0.75em;
+  background-color: var(--highlight-color);
+  border-bottom: 1px solid var(--border-color);
 }
-.top-bar .logo {
-  justify-self: flex-start;
-  flex-grow: 1;
-}
-.top-bar .links {
-  justify-self: flex-end;
-}
-.main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.center {
-  text-align: center;
-  padding: 1em;
-}
-.button {
-  font-size: 0.9em;
-  padding: 0.4em 0.6em;
-  border: 2px solid #89d6c9;
-  border-radius: 3px;
-  transition-duration: 0.2s;
-}
-.button:hover {
-  background-color: #89d6c9;
-}
-.gamelist table {
-  width: 100%;
+
+/* index-specific bits */
+
+.gametable {
   border-collapse: collapse;
 }
-.gamelist tr:nth-child(even) {
-  background-color: #F0F0F0;
+.gametable tr:nth-child(even) {
+  background-color: var(--light-border-color);
 }
-.gamelist th {
-  background-color: #89d6c9;
+.gametable th {
+  background-color: var(--highlight-color);
+  border-bottom: 1px solid var(--border-color);
   padding: 1em;
 }
-.gamelist td {
+.gametable td {
   text-align: center;
   padding: 1em 2em;
 }
-.game {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-}
-.game-menu {
+
+.menu {
   position: absolute;
   top: 50%;
   left: 50%;
-  min-width: 15em;
   transform: translate(-50%, -50%);
-  border: 2px solid #AAA;
-  border-radius: 0.25em;
-  opacity: 1.0;
-  background-color: #FAFAFA;
-  z-index: 20000;
-  display: none;
+  min-width: 15em;
+  padding: 0.7em;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5em;
+  background-color: var(--background-color);
+  display: flex;
   flex-direction: column;
   align-content: center;
-  padding: 0.7em;
 }
-.table {
-  flex-grow: 1;
+
+/* game-specific bits */
+
+.left-pane {
+  height: 100%;
+  overflow-y: auto;
+  min-width: 10em;
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
   align-items: center;
 }
-.players {
-  min-width: 25%;
-  height: 100%;
-  overflow-y: scroll;
-  border-left: 1px solid #AAA;
+.center-pane {
+  flex-grow: 1;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
-.player {
-  margin: 2em 1.2em 0;
-}
-.player .top {
+.right-pane {
+  height: 100%;
+  overflow-y: auto;
+  min-width: 15em;
+  border-left: 1px solid var(--border-color);
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  padding-bottom: 0.25em;
-  border-bottom: 1px solid #AAA;
+  flex-direction: column;
+  align-items: center;
 }
-.player .id {
-  font-weight: bold;
-}
-.nobles {
-  display: flex;
-  flex-direction: row;
-}
+
 .noble {
   width: 4.2em;
   height: 4.2em;
   margin: 0.7em;
   border-radius: 0.25em;
-  background-color: #DDD;
+  background-color: var(--noble-background-color);
   display: flex;
   flex-direction: row;
 }
 .noble .info {
-  display: flex;
-  flex-direction: column;
-  align-content: center;
   padding: 0.2em;
   border-radius: 0.25em 0 0 0.25em;
-  background-color: #EEE;
+  background-color: var(--light-border-color);
+  display: flex;
+  flex-direction: column;
+  text-align: center;
 }
 .noble .points {
-  text-align: center;
   font-weight: bold;
 }
 .noble .cost {
   width: 1em;
   font-size: 0.6em;
-  text-align: center;
   border-width: 1px;
   border-style: solid;
   border-radius: 0.25em;
   padding-top: 0.1em;
   margin-top: 0.1em;
 }
-.cards {
+
+.player {
+  margin: 1.5em 1.2em 0;
+}
+.player .header {
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--border-color);
 }
-.player .cards {
-  justify-content: space-evenly;
+.player .id {
+  font-weight: bold;
 }
+
 .card {
   width: 3.8em;
   height: 5.2em;
@@ -160,23 +133,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-.buyable:hover {
-  box-shadow: 2px 2px gold, 2px -2px gold, -2px 2px gold, -2px -2px gold;
-}
-.smallcard {
-  width: 1.2em;
-  height: 1.75em;
-  border-width: 1px;
-  border-style: solid;
-  border-radius: 0.25em;
-  text-align: center;
-}
-.smallcard .num {
-  width: 1.2em;
-  height: 1.75em;
-  display: table-cell;
-  vertical-align: middle;
-}
 .card .top {
   display: flex;
   flex-direction: row;
@@ -184,10 +140,9 @@ body {
   justify-content: space-between;
   padding: 0.2em;
   border-radius: 0.25em 0.25em 0 0;
-  background-color: rgba(255,255,255,0.4);
+  background-color: rgba(255, 255, 255, 0.4);
 }
 .card .points {
-  text-align: center;
   font-weight: bold;
 }
 .card .gem {
@@ -195,15 +150,15 @@ body {
   height: 0.6em;
   border-width: 1px;
   border-style: solid;
-  transform:rotate(45deg);
+  transform: rotate(45deg);
 }
 .card .info {
   height: 100%;
+  padding: 0.2em;
   display: flex;
   flex-direction: column;
-  align-content: center;
   justify-content: flex-end;
-  padding: 0.2em;
+  align-content: center;
 }
 .card .cost {
   width: 1em;
@@ -215,36 +170,39 @@ body {
   padding-top: 0.1em;
   margin-top: 0.1em;
 }
-.coinholder {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-  align-items: center;
+.buyable:hover {
+  box-shadow: 2px 2px gold, 2px -2px gold, -2px 2px gold, -2px -2px gold;
 }
-.coinside {
-  width: 10em;
+
+.pcard {
+  width: 1.3em;
+  height: 1.75em;
+  margin-left: 0.25em;
+  margin-right: 0.25em;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 0.25em;
   text-align: center;
 }
-.coins {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
+.pcard .num {
+  width: 1.3em;
+  height: 1.75em;
+  display: table-cell;
+  vertical-align: middle;
 }
+
 .coin {
-  width: 2em;
-  height: 2em;
   margin: 0.5em;
   text-align: center;
   border-width: 1px;
   border-style: solid;
   border-radius: 50%;
 }
-.players .coin {
+.player .coin {
   width: 1.3em;
   height: 1.3em;
-  margin-left: unset;
-  margin-right: unset;
+  margin-left: 0.25em;
+  margin-right: 0.25em;
 }
 .coin .num {
   width: 2em;
@@ -252,27 +210,30 @@ body {
   display: table-cell;
   vertical-align: middle;
 }
-.players .coin .num {
+.player .coin .num {
   font-size: 0.7em;
 }
+
+/* colors */
+
 .red {
   color: white;
-  border-color: #EEE;
+  border-color: var(--light-border-color);
   background-color: red;
 }
 .blue {
   color: white;
-  border-color: #EEE;
+  border-color: var(--light-border-color);
   background-color: blue;
 }
 .green {
   color: white;
-  border-color: #EEE;
+  border-color: var(--light-border-color);
   background-color: green;
 }
 .black {
   color: white;
-  border-color: #EEE;
+  border-color: var(--light-border-color);
   background-color: black;
 }
 .white {
@@ -285,13 +246,14 @@ body {
   border-color: black;
   background-color: gold;
 }
+
 .redcard {
   background-color: #F0C0C0;
   border: 1px solid #FAFAFA;
 }
 .bluecard {
   background-color: #C0E0F0;
-  border: 1px solid #FAFAFA;
+  border: 1px solid var(--light-border-color);
 }
 .greencard {
   background-color: #B0F0B0;
@@ -305,17 +267,43 @@ body {
   background-color: #F8F8F8;
   border: 1px solid #DDD;
 }
-.menu {
-  position: fixed;
-  border: 2px solid #AAA;
-  border-radius: 0.25em;
-  opacity: 1.0;
-  background-color: #FAFAFA;
-  z-index: 20000;
-  display: none;
-  flex-direction: column;
-  padding: 0.7em;
+
+/* common utility bits */
+
+html, body, .full-height {
+  height: 100%;
+  overflow-y: hidden;
 }
-.menu .button, .coinside .button {
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+.flex-column-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+.flex-row-evenly {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+.flex-row-between {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.button {
+  padding: 0.25em 0.5em;
+  border-radius: 0.5em;
   margin: 0.2em;
+}
+.hidden {
+  opacity: 0;
 }

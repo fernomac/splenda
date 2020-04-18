@@ -346,17 +346,24 @@ func (i *Impl) Buy(gameID string, userID string, tier int, index int) (string, e
 			return "", "", err
 		}
 
-		// Insert it to the player's hand.
 		reserved := false
-		if err := tx.InsertPlayerCard(userID, cardID, reserved); err != nil {
-			return "", "", err
+		if tier > 0 {
+			// Insert it to the player's hand.
+			if err := tx.InsertPlayerCard(userID, cardID, reserved); err != nil {
+				return "", "", err
+			}
+
+			// Replace it on the board.
+			if err := m.DealCard(tx, tier, index); err != nil {
+				return "", "", err
+			}
+		} else {
+			// Simply convert it to un-reserved.
+			if err := tx.UpdatePlayerCard(userID, cardID, reserved); err != nil {
+				return "", "", err
+			}
 		}
 		cards[card.color]++
-
-		// Replace it on the board.
-		if err := m.DealCard(tx, tier, index); err != nil {
-			return "", "", err
-		}
 
 		return nextState(&m, tx, cards)
 	})
