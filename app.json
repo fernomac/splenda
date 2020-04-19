@@ -4,7 +4,7 @@
   "environments": {
     "test": {
       "addons": [
-        "heroku-postgres:in-dyno"
+        "heroku-postgresql:in-dyno"
       ]
     }
   }
