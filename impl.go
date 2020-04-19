@@ -209,7 +209,7 @@ func (i *Impl) DeleteGame(gameID string, userID string) error {
 
 // Take3 takes three coins of different colors.
 func (i *Impl) Take3(gameID string, userID string, colors []string) (string, error) {
-	if len(colors) != 3 {
+	if len(colors) == 0 || len(colors) > 3 {
 		return "", errors.New("must specify three colors")
 	}
 	for _, c := range colors {

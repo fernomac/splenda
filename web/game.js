@@ -213,8 +213,8 @@ const takemenu = {
   }},
   methods: {
     'validate': function() {
+      this.takeable = (this.colors.length > 0)
       const enough = (this.colors.length === this.num)
-      this.takeable = enough
       for (var color in this.disabled) {
         this.disabled[color] = (enough && !this.colors.includes(color))
       }
