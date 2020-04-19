@@ -1,14 +1,16 @@
 package splenda
 
 import (
+	"os"
 	"os/exec"
 	"testing"
 )
 
 func TestTwoPlayers(t *testing.T) {
-	defer cleanup()
+	url := os.Getenv("DATABASE_URL")
+	defer cleanup(url)
 
-	impl, err := setup()
+	impl, err := setup(url)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,13 +94,16 @@ func assertCards(t *testing.T, cards []*Card, expected []string) {
 	}
 }
 
-func setup() (*Impl, error) {
-	cleanup()
+func setup(url string) (*Impl, error) {
+	if url == "" {
+		cleanup(url)
 
-	cmd := exec.Command("createdb", "splenda-test")
-	cmd.Run()
+		cmd := exec.Command("createdb", "splenda-test")
+		cmd.Run()
+		url = "postgres://localhost/splenda-test?sslmode=disable"
+	}
 
-	db := NewDB("postgres://localhost/splenda-test?sslmode=disable")
+	db := NewDB(url)
 	if err := db.ApplySchema(); err != nil {
 		return nil, err
 	}
@@ -119,7 +124,9 @@ func setup() (*Impl, error) {
 	return impl, nil
 }
 
-func cleanup() {
-	cmd := exec.Command("dropdb", "splenda-test")
-	cmd.Run()
+func cleanup(url string) {
+	if url == "" {
+		cmd := exec.Command("dropdb", "splenda-test")
+		cmd.Run()
+	}
 }

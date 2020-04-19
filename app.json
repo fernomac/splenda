@@ -1,4 +1,11 @@
 {
   "name": "Splenda",
-  "repository": "https://github.com/fernomac/splenda"
+  "repository": "https://github.com/fernomac/splenda",
+  "environments": {
+    "test": {
+      "addons": [
+        "heroku-postgres:in-dyno"
+      ]
+    }
+  }
 }
