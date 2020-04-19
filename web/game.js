@@ -221,9 +221,11 @@ const takemenu = {
     },
     'take': function() {
       this.$emit('take', this.colors)
+      this.colors = []
     },
     'cancel': function() {
       this.$emit('cancel')
+      this.colors = []
     }
   },
   template: `
@@ -282,7 +284,7 @@ const buymenu = {
       if (tier !== undefined && index !== undefined) {
         if (tier === 0) {
           if (this.label === 'reserve') {
-            // HACK HACK HACK.
+            // HACK HACK HACK: you're trying to reserve a reserved card.
             return null
           }
           return findplayer(userid, this.game.players).reserved[index]
