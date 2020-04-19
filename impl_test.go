@@ -100,8 +100,9 @@ func setup(url string) (*Impl, error) {
 
 		cmd := exec.Command("createdb", "splenda-test")
 		cmd.Run()
-		url = "postgres://localhost/splenda-test?sslmode=disable"
+		url = "postgres://localhost/splenda-test"
 	}
+	url += "?sslmode=disable"
 
 	db := NewDB(url)
 	if err := db.ApplySchema(); err != nil {
